@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Client\ConnectionException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -43,8 +44,12 @@ class Handler extends ExceptionHandler
      */
     public function register()
     {
-        $this->reportable(function (Throwable $e) {
-            //
+        $this->renderable(function (ConnectionException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Something went wrong.'
+                ], 500);
+            }
         });
     }
 }

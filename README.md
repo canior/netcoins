@@ -1,66 +1,85 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Crypto Provider Integration
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Table of Content
+* [Overview](#overview)
+* [Demo](#demo)
+* [Technical Aspect](#technical-aspect)
+* [Tests Include](#tests-include)
+* [Installation](#installation)
 
-## About Laravel
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Overview
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Create a small API which consolidates some key data from a third party. 
+The API must connect to the third party API “CoinGecko”, the documentation for which can be found here: 
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+https://www.coingecko.com/en/api/documentation.
 
-## Learning Laravel
+The CoinGecko url is as follows:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+https://api.coingecko.com/api/v3/
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Demo
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+![screeen_shot](./docs/demo1.png)
+![screeen_shot_1](./docs/demo2.png)
 
-## Laravel Sponsors
+### Note:
+For demo purpose, high24, low24 and current price are integrated from coingecko api
+- coins/markets
+- simple/price
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+## Technical Aspect
 
-### Premium Partners
+### System Design
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+1. A new service provider with crypto config is registered to bind the provider interface with implementation
+2. CryptoServiceInterface is used to define getPriceByCoin & getCoinsMarkets as common functions to fit all crypto providers
+3. CoinGeckoService.getPriceByCoin implements CryptoServiceInterface with its own CoinPriceRequest & CoinPriceResponse which adapt AbstractCoinPriceRequest & CryptoCoinPriceResponse
+4. CoinGeckoService.getCoinsMarkets implements CryptoServiceInterface with its own CoinsMarketsRequest & CoinMarketResponse which adapt AbstractCoinsMarketsRequest & CryptoCoinMarketResponse
+5. The UserConsumerService uses CryptoServiceInterface to wrap the data and returns
 
-## Contributing
+#### Adding a new third-party provider:
+1. Register a provider in CryptoServiceProvider
+2. Update config in config/crypto.php
+3. Create a "NewService" implements CryptoServiceInterface
+4. Create request and response to adapt CoinPriceRequest, CoinsMarketsRequest, CoinPriceResponse and CoinMarketResponse
+5. Update .env CRYPTO_PROVIDER to the new provider
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+#### Optimizations
+1. If we want to mix different crypto provider with different apis, we can split CryptoServiceInterface into smaller interface
+2. If we need more data from crypto provider, we can update CoinPriceResponse and CoinMarketResponse to load more as required
+3. If some third-party crypto provider has a different payload, we can define its own requests which adapt AbstractCoinPriceRequest and AbstractCoinsMarketsRequest
+4. If a third-party api is down, right now it returns 500 with and error message defined in Exception/Handler.php, and we can create different Exception json if necessary
 
-## Code of Conduct
+### Data Flow
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+1. Api payload received
+2. UserConsumerRequest validates payload
+3. UserConsumerService is called with crypto service provider config
+4. CoinGeckoService is called in this case to load data from third-party api
+5. UserConsumerService returns UserConsumerResource containing all required data
+  
 
-## Security Vulnerabilities
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Technical Skills covers
 
-## License
+- laravel framework 9
+- form request validation
+- service provider
+- design patterns
+- unit tests with mocking
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Tests Include
+
+![php_test](./docs/demo3.png)
+
+### Note
+- UserConsumerControllerTest & CoinGeckoServiceTest tests integrate with CoinGecko which will send a real request to this api
+- UserConsumerServiceTest mocks the CoinGecko api calls
+
+## Installation
+
+1. start api `` php artisan serve ``
+2. run unit tests `` php artisan test ``
