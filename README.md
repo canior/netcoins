@@ -50,6 +50,7 @@ For demo purpose, high24, low24 and current price are integrated from coingecko 
 1. If we want to mix different crypto provider with different apis, we can split CryptoServiceInterface into smaller interface
 2. If we need more data from crypto provider, we can update CoinPriceResponse and CoinMarketResponse to load more as required
 3. If some third-party crypto provider has a different payload, we can define its own requests which adapt AbstractCoinPriceRequest and AbstractCoinsMarketsRequest
+4. If a third-party api is down, right now it returns 500 with and error message defined in Exception/Handler.php, and we can create different Exception json if necessary
 
 ### Data Flow
 
